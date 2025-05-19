@@ -4,19 +4,22 @@
 
 #include "chip8.h"
 
+#define DEBUG_MODE
+
 #define PIXEL_SIZE 15
 
 #define SCR_WIDTH  PIXEL_SIZE * 64
 #define SCR_HEIGHT PIXEL_SIZE * 32
 
-// we'll be using this to calculate the size of each pixel on screen
-int gcd(int, int);
-
 int main(int argc, char* argv[]) {
     int testOP = 0xABCD;
+    char* path = NULL;
 
-    printf("%x", CHIP8_extractMSB(testOP));
+#ifdef DEBUG_MODE
+    // for convenience store path to a test rom
+    path = "../ROMS/PONG";
 
+#endif
 
     int i = 0, j = 0;
     // use gcd to figure out the best size for pixels
@@ -27,6 +30,11 @@ int main(int argc, char* argv[]) {
     // Event loop
     SDL_Event e;
     int running = 1;
+
+    if (CHIP8_loadROM(path) == FAILED_TO_LOAD_ROM) {
+        printf("There was an error while loading ROM at %s\n", path);
+        return 1;
+    }
 
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -117,20 +125,4 @@ int main(int argc, char* argv[]) {
     SDL_Quit();
 
     return 0;
-}
-
-/// The function calculates the greatest common devisor (gcd) for a and b
-/// @param a
-/// @param b
-/// @return gcd
-int gcd(int a, int b) {
-    int tmp = 0;
-
-    while (b != 0) {
-        tmp = b;
-        b = a % b;
-        a = tmp;
-    }
-
-    return a;
 }

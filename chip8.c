@@ -4,6 +4,9 @@
 
 #include "chip8.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 // user space registers declarations
 BYTE reg[0xF];
 
@@ -31,10 +34,11 @@ BYTE SP;
 // we need 8 * 4 bytes = 24
 BYTE vmem[24];
 
+// memory for our ROMs and sprites
 BYTE mem[0xFFF];
 
 
-/// The function returns the most significant bit (MSB) of the opcode
+/// The function returns the most significant 4 bits (MSB) of the opcode
 /// @param op opcode
 /// @return Most Significant Bit
 int CHIP8_extractMSB(WORD op) {
@@ -61,6 +65,24 @@ int CHIP8_extractKK(WORD op) {
     return (op & 0x00FF);
 }
 
+/// The function loads ROM at the given path into the memory (mem)
+/// @param path path to the ROM
+/// @return FAILED_TO_LOAD_ROM if anything gone wrong
+///         EXIT_SUCCESS if ROM was loaded
+ReturnCode CHIP8_loadROM(const char* path) {
+    FILE* fp = fopen(path, "rb");
 
+    // check for errors while opening the given path
+    if (fp == NULL) {
+        return FAILED_TO_LOAD_ROM;
+    }
+
+    // read 3584 bytes from the ROM onto the CS (starting t 0x200)
+    fread(mem + 0x200, sizeof(WORD), 0xDFF, fp);
+
+    fclose(fp);
+
+    return EXIT_SUCCESS;
+}
 
 
