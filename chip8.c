@@ -13,14 +13,15 @@ BYTE reg[0xF];
 // creating a shortcut for VF register for convenience
 #define VF reg[0xF - 0x1]
 
-unsigned short I;
+WORD I;
 
 BYTE delayTimer;
 BYTE soundTimer;
 
 // super space registers declarations
 
-WORD IP;
+// instructions start at 0x200
+WORD IP = 0x200;
 WORD stack[0xF];
 BYTE SP;
 
@@ -85,4 +86,173 @@ ReturnCode CHIP8_loadROM(const char* path) {
     return EXIT_SUCCESS;
 }
 
+ReturnCode CHIP8_decodeOp() {
+    // fetch current op
+    WORD op = mem[IP];
 
+    ReturnCode rc = CORRECT_EXIT;
+
+    switch (CHIP8_extractMSB(op)) {
+        case 0x0:
+            rc = CHIP8_decode0x0Subset(op);
+            break;
+        case 0x1:
+            rc = CHIP8_decode0x1Subset(op);
+            break;
+        case 0x2:
+            rc = CHIP8_decode0x2Subset(op);
+            break;
+        case 0x3:
+            rc = CHIP8_decode0x3Subset(op);
+            break;
+        case 0x4:
+            rc = CHIP8_decode0x4Subset(op);
+            break;
+        case 0x5:
+            rc = CHIP8_decode0x5Subset(op);
+            break;
+        case 0x6:
+            rc = CHIP8_decode0x6Subset(op);
+            break;
+        case 0x7:
+            rc = CHIP8_decode0x7Subset(op);
+            break;
+        case 0x8:
+            rc = CHIP8_decode0x8Subset(op);
+            break;
+        case 0x9:
+            rc = CHIP8_decode0x9Subset(op);
+            break;
+        case 0xA:
+            rc = CHIP8_decode0xASubset(op);
+            break;
+        case 0xB:
+            rc = CHIP8_decode0xBSubset(op);
+            break;
+        case 0xC:
+            rc = CHIP8_decode0xCSubset(op);
+            break;
+        case 0xD:
+            rc = CHIP8_decode0xDSubset(op);
+            break;
+        case 0xE:
+            rc = CHIP8_decode0xESubset(op);
+            break;
+        case 0xF:
+            rc = CHIP8_decode0xFSubset(op);
+            break;
+        default:
+            break;
+    }
+
+    return rc;
+}
+
+/// The function increments SP and stores the data onto the stack
+/// @param data data to be stored onto the stack
+/// @return STACK_OVERFLOW if SP > 0xF (stack size), else CORRECT_EXIT
+ReturnCode CHIP8_push(WORD data) {
+    SP++;
+
+    if (SP > 0xF) {
+        return STACK_OVERFLOW;
+    }
+
+    stack[SP] = data;
+
+    return CORRECT_EXIT;
+}
+
+/// The function returns top WORD from the stack and decrements SP,
+/// and stores in into *data
+/// @param data will store WORD from the stack
+/// @return STACK_UNDERFLOW if SP < 0, else CORRECT_EXIT
+ReturnCode CHIP8_pop(WORD* data) {
+    *data = stack[SP];
+    SP--;
+
+    if (SP < 0) {
+        return STACK_UNDERFLOW;
+    }
+
+    return CORRECT_EXIT;
+}
+
+ReturnCode CHIP8_decode0x0Subset(WORD op) {
+    int i = 0;
+    BYTE opType = 0;
+    // since 0NNN opcode is obsolete, skipping it
+    if (CHIP8_extractX(op) != 0) {
+        return CORRECT_EXIT;
+    }
+
+    // unknown opcode, return error code
+    if (CHIP8_extractY(op) != 0xE) {
+        return UNRECOGNIZED_OPCODE;
+    }
+
+    opType = CHIP8_extractY(op);
+
+    // 00E0 - CLS (clear screen)
+    if (opType == 0x0) {
+        for (i = 0; i < sizeof(vmem); i++) {
+            vmem[i] = 0x0;
+        }
+
+        return CORRECT_EXIT;
+    }
+
+    // 00EE - RET (return from subroutine)
+    if (opType == 0xE) {
+        // pop will return STACK_UNDERFLOW if an error occured
+        // else CORRECT_EXIT
+        return CHIP8_pop(&IP);
+    }
+
+    return UNRECOGNIZED_OPCODE;
+}
+ReturnCode CHIP8_decode0x1Subset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0x2Subset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0x3Subset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0x4Subset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0x5Subset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0x6Subset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0x7Subset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0x8Subset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0x9Subset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0xASubset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0xBSubset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0xCSubset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0xDSubset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0xESubset(WORD) {
+    return CORRECT_EXIT;
+}
+ReturnCode CHIP8_decode0xFSubset(WORD) {
+    return CORRECT_EXIT;
+}

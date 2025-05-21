@@ -1,0 +1,3 @@
+/Users/daniel_shelgunov/CLionProjects/Chip8Emu/cmake-build-debug/CMakeFiles/Chip8Emu.dir
+/Users/daniel_shelgunov/CLionProjects/Chip8Emu/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/daniel_shelgunov/CLionProjects/Chip8Emu/cmake-build-debug/CMakeFiles/rebuild_cache.dir

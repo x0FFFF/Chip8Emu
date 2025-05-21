@@ -12,7 +12,6 @@
 #define SCR_HEIGHT PIXEL_SIZE * 32
 
 int main(int argc, char* argv[]) {
-    int testOP = 0xABCD;
     char* path = NULL;
 
 #ifdef DEBUG_MODE
@@ -76,7 +75,7 @@ int main(int argc, char* argv[]) {
     // Update the screen
     SDL_RenderPresent(renderer);
     // declare our screen pixels with rects
-    // since we have 64x32 screen we need 2048 rects
+    // since we have 64x32 screen, we need 2048 rects
     SDL_Rect pixels[SCR_WIDTH][SCR_HEIGHT];
 
     // init all the pixels with rects
@@ -106,8 +105,6 @@ int main(int argc, char* argv[]) {
             }
         }
         SDL_SetRenderDrawColor( renderer, 0xFF, 0xFF, 0xFF, 0xFF );
-
-
 
         // testing to render a single pixel
         SDL_RenderFillRect(renderer, &(pixels[0][0]));

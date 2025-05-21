@@ -18,6 +18,8 @@ typedef enum returnCode {
     FAILED_TO_LOAD_ROM,
 } ReturnCode;
 
+extern BYTE vmem[24];
+
 int CHIP8_extractMSB(WORD);
 int CHIP8_extractNNN(WORD);
 int CHIP8_extractN(WORD);
@@ -25,9 +27,27 @@ int CHIP8_extractX(WORD);
 int CHIP8_extractY(WORD);
 int CHIP8_extractKK(WORD);
 
-ReturnCode CHIP8_loadROM(const char* path);
-ReturnCode CHIP8_fetchOp();
+ReturnCode CHIP8_push(WORD);
+ReturnCode CHIP8_pop(WORD*);
 
-extern BYTE vmem[24];
+ReturnCode CHIP8_loadROM(const char* path);
+ReturnCode CHIP8_decodeOp();
+
+ReturnCode CHIP8_decode0x0Subset(WORD);
+ReturnCode CHIP8_decode0x1Subset(WORD);
+ReturnCode CHIP8_decode0x2Subset(WORD);
+ReturnCode CHIP8_decode0x3Subset(WORD);
+ReturnCode CHIP8_decode0x4Subset(WORD);
+ReturnCode CHIP8_decode0x5Subset(WORD);
+ReturnCode CHIP8_decode0x6Subset(WORD);
+ReturnCode CHIP8_decode0x7Subset(WORD);
+ReturnCode CHIP8_decode0x8Subset(WORD);
+ReturnCode CHIP8_decode0x9Subset(WORD);
+ReturnCode CHIP8_decode0xASubset(WORD);
+ReturnCode CHIP8_decode0xBSubset(WORD);
+ReturnCode CHIP8_decode0xCSubset(WORD);
+ReturnCode CHIP8_decode0xDSubset(WORD);
+ReturnCode CHIP8_decode0xESubset(WORD);
+ReturnCode CHIP8_decode0xFSubset(WORD);
 
 #endif //CHIP8_H
