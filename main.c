@@ -1,125 +1,155 @@
-#include <SDL.h>
 #include <stdio.h>
-#include <math.h>
-
+#include <SDL.h>
 #include "chip8.h"
 
-#define DEBUG_MODE
+#define PIXEL_SiZE 10
+// these will define SDL_Window dimensions
+#define WINDOW_HEIGHT (CHIP8_SCREEN_HEIGHT * PIXEL_SiZE)
+#define WINDOW_WIDTH  (CHIP8_SCREEN_WIDTH  * PIXEL_SiZE)
 
-#define PIXEL_SIZE 15
+static void initPixels(SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], int pixel_size, int rows, int cols);
+static void renderScreen(SDL_Renderer* renderer, SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], BYTE vmem[][CHIP8_SCREEN_WIDTH]);
 
-#define SCR_WIDTH  PIXEL_SIZE * 64
-#define SCR_HEIGHT PIXEL_SIZE * 32
+int main(void)
+{
+    SDL_Window* window = NULL;
+    SDL_Renderer* renderer = NULL;
+    SDL_Event event;
 
-int main(int argc, char* argv[]) {
-    char* path = NULL;
+    SDL_Rect pixels[CHIP8_SCREEN_HEIGHT][CHIP8_SCREEN_WIDTH];
 
-#ifdef DEBUG_MODE
-    // for convenience store path to a test rom
-    path = "../ROMS/PONG";
+    // is used for the main loop
+    int is_running = 1;
 
-#endif
-
-    int i = 0, j = 0;
-    // use gcd to figure out the best size for pixels
-    int pixel_size = PIXEL_SIZE;
-    // will store pixel position when initializing pixels
-    int x_offset = 0, y_offset = 0;
-
-    // Event loop
-    SDL_Event e;
-    int running = 1;
-
-    if (CHIP8_loadROM(path) == FAILED_TO_LOAD_ROM) {
-        printf("There was an error while loading ROM at %s\n", path);
-        return 1;
+    // init SDL and check if SDL was initialized correctly
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    {
+        printf("Failed to initialize SDL library.");
+        exit(-1);
     }
 
-    // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-        return 1;
+    // init the main window
+    window = SDL_CreateWindow("Chip8Emu",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        0
+        );
+
+    // now check if the main window was created
+    if (!window)
+    {
+        printf("Failed to create window.");
+        exit(-1);
     }
 
-    // Create a window
-    SDL_Window* window = SDL_CreateWindow(
-        "Black Window",                  // window title
-        SDL_WINDOWPOS_CENTERED,         // initial x position
-        SDL_WINDOWPOS_CENTERED,         // initial y position
-        SCR_WIDTH, SCR_HEIGHT,                        // width and height
-        SDL_WINDOW_SHOWN                // flags
-    );
+    initPixels(pixels, PIXEL_SiZE, CHIP8_SCREEN_HEIGHT, CHIP8_SCREEN_WIDTH);
 
-    if (!window) {
-        printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-        SDL_Quit();
-        return 1;
+    // now let's set up the renderer
+    renderer = SDL_CreateRenderer(window,
+        -1,
+        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
+        );
+    // check if failed to get surface
+    if (!renderer)
+    {
+        printf("Failed to create window renderer.");
+        exit(-1);
     }
 
-    // Create renderer
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
-        printf("Renderer could not be created! SDL_Error: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
+    // only for debug
+    SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
 
-    // Set draw color to white (R, G, B, A)
-    //SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 255);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    vmem[0][0] = 1;
+    vmem[1][1] = 1;
+    vmem[2][2] = 1;
+    vmem[3][3] = 1;
 
-    // Clear screen with the draw color
-    SDL_RenderClear(renderer);
+    renderScreen(renderer, pixels, vmem);
 
-    // Update the screen
     SDL_RenderPresent(renderer);
-    // declare our screen pixels with rects
-    // since we have 64x32 screen, we need 2048 rects
-    SDL_Rect pixels[SCR_WIDTH][SCR_HEIGHT];
+    ////////////////// end of "for debug" area
 
-    // init all the pixels with rects
-    for (i = 0; i < SCR_WIDTH; i++) {
-        for (j = 0; j < SCR_HEIGHT; j++) {
-            // init size
-            pixels[i][j].w = pixel_size;
-            pixels[i][j].h = pixel_size;
-            // init coords
-            // we'll calculate the coordinates as offset from last pixel on the line
+    // main game loop
+    while (is_running)
+    {
+        if (SDL_PollEvent(&event) > 0)
+        {
+            switch (event.type)
+            {
+                case SDL_QUIT:
+                    is_running = 0;
+                    break;
+                default: break;
+            }
+        }
+
+        SDL_UpdateWindowSurface(window);
+    }
+
+    // release the renderer
+    SDL_DestroyRenderer(renderer);
+
+    return 0;
+}
+
+/// Initializes a 2d array of pixels with SDL_Rect
+/// @param pixels Pixel 2d array to be initialized
+/// @param pixel_size The size of each pixel on the screen
+/// @param rows Number of rows in the array
+/// @param cols Number of columns in the array
+void initPixels(SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], int pixel_size, int rows, int cols) {
+    int i = 0;
+    int j = 0;
+
+    int x_offset = 0;
+    int y_offset = 0;
+
+    for (i = 0; i < rows; i++)
+    {
+        // init each row
+        for (j = 0; j < cols; j++)
+        {
             pixels[i][j].x = x_offset;
             pixels[i][j].y = y_offset;
 
+            pixels[i][j].h = pixel_size;
+            pixels[i][j].w = pixel_size;
+
+            // move the offset to the right to fit the next pixel inside the row
             x_offset += pixel_size;
         }
 
-        // reset for each new line
+        // after finishing the row, reset x_offset to start from the left
         x_offset = 0;
+        // also increase y_offset to fit the next row
         y_offset += pixel_size;
     }
+}
 
-    // game loop
-    while (running) {
-        while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) {
-                running = 0;
-            }
+/// Renders all the pixels according to their state in video memory to the renderer
+/// @param renderer Renderer
+/// @param pixels Array of SDL_rect, represents the pixels on the screen
+/// @param vmem video memory of CHIP8
+void renderScreen(SDL_Renderer* renderer, SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], BYTE vmem[][CHIP8_SCREEN_WIDTH])
+{
+    int i = 0;
+    int j = 0;
+
+    for (i = 0; i < CHIP8_SCREEN_HEIGHT; i++)
+    {
+        for (j = 0; j < CHIP8_SCREEN_WIDTH; j++)
+        {
+            // if pixel at i, j is on, the draw it with white color
+            if (vmem[i][j])
+                SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
+            // else draw it with black
+            else
+                SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0x0, SDL_ALPHA_OPAQUE);
+
+            // now render the pixel on the renderer with correct color we set above
+            SDL_RenderFillRect(renderer, &pixels[i][j]);
         }
-        SDL_SetRenderDrawColor( renderer, 0xFF, 0xFF, 0xFF, 0xFF );
-
-        // testing to render a single pixel
-        SDL_RenderFillRect(renderer, &(pixels[0][0]));
-        SDL_SetRenderDrawColor( renderer, 0, 0, 0, 0 );
-        // Clear the screen with black color and update
-        //SDL_RenderClear(renderer);
-        SDL_RenderPresent(renderer);
-
-        SDL_Delay(16); // ~60 FPS
     }
-
-    // Clean up
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-
-    return 0;
 }

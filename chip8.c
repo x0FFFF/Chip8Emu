@@ -29,11 +29,7 @@ BYTE SP;
 // this implementation uses a 64x32 screen
 // the screen supporting black and white, so each
 // pixel will have 2 states: 1 - on, 0 - off
-// 64 / 8 (1 byte) = 8
-// 32 / 8 (1 byte) = 4
-// so to represent each pixel with its own byte
-// we need 8 * 4 bytes = 24
-BYTE vmem[24];
+BYTE vmem[CHIP8_SCREEN_HEIGHT][CHIP8_SCREEN_WIDTH];
 
 // memory for our ROMs and sprites
 BYTE mem[0xFFF];
@@ -78,7 +74,7 @@ ReturnCode CHIP8_loadROM(const char* path) {
         return FAILED_TO_LOAD_ROM;
     }
 
-    // read 3584 bytes from the ROM onto the CS (starting t 0x200)
+    // read 3584 bytes from the ROM onto the CS (starting at 0x200)
     fread(mem + 0x200, sizeof(WORD), 0xDFF, fp);
 
     fclose(fp);
@@ -179,7 +175,7 @@ ReturnCode CHIP8_pop(WORD* data) {
 }
 
 ReturnCode CHIP8_decode0x0Subset(WORD op) {
-    int i = 0;
+    int i = 0, j = 0;
     BYTE opType = 0;
     // since 0NNN opcode is obsolete, skipping it
     if (CHIP8_extractX(op) != 0) {
@@ -195,8 +191,11 @@ ReturnCode CHIP8_decode0x0Subset(WORD op) {
 
     // 00E0 - CLS (clear screen)
     if (opType == 0x0) {
-        for (i = 0; i < sizeof(vmem); i++) {
-            vmem[i] = 0x0;
+        for (i = 0; i < CHIP8_SCREEN_HEIGHT; i++) {
+            for (j = 0; j < CHIP8_SCREEN_HEIGHT; j++) {
+                // set every pixel off
+                vmem[i][j] = 0x0;
+            }
         }
 
         return CORRECT_EXIT;

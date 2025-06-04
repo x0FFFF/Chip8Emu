@@ -5,6 +5,10 @@
 #ifndef CHIP8_H
 #define CHIP8_H
 
+// screen dimensions measured in pixels
+#define CHIP8_SCREEN_WIDTH 64
+#define CHIP8_SCREEN_HEIGHT 32
+
 // 8 bits
 typedef unsigned char BYTE;
 // 16 bits
@@ -18,7 +22,7 @@ typedef enum returnCode {
     FAILED_TO_LOAD_ROM,
 } ReturnCode;
 
-extern BYTE vmem[24];
+extern BYTE vmem[CHIP8_SCREEN_HEIGHT][CHIP8_SCREEN_WIDTH];
 
 int CHIP8_extractMSB(WORD);
 int CHIP8_extractNNN(WORD);
