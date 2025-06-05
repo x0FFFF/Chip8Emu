@@ -388,15 +388,55 @@ ReturnCode CHIP8_decode0x2Subset(WORD op) {
 
     return rc;
 }
-ReturnCode CHIP8_decode0x3Subset(WORD) {
+
+/// Decodes SE (Vx, KK) opcode
+/// @param op Opcode
+/// @return CORRECT_EXIT
+ReturnCode CHIP8_decode0x3Subset(WORD op) {
+    int val = CHIP8_extractKK(op);
+    int x = CHIP8_extractX(op);
+
+    // if Vx == val, skip next instruction
+    if (reg[x] == val)
+        IP += 4;
+    else
+        IP += 2;
+
     return CORRECT_EXIT;
 }
-ReturnCode CHIP8_decode0x4Subset(WORD) {
+
+/// Decodes SNE opcode
+/// @param op Opcode
+/// @return CORRECT_EXIT
+ReturnCode CHIP8_decode0x4Subset(WORD op) {
+    int val = CHIP8_extractKK(op);
+    int x = CHIP8_extractX(op);
+
+    // if Vx != val, skip next instruction
+    if (reg[x] != val)
+        IP += 4;
+    else
+        IP += 2;
+
     return CORRECT_EXIT;
 }
-ReturnCode CHIP8_decode0x5Subset(WORD) {
+
+/// Decodes SE (Vx, Vy) opcode
+/// @param op Opcode
+/// @return CORRECT_EXIT
+ReturnCode CHIP8_decode0x5Subset(WORD op) {
+    int x = CHIP8_extractX(op);
+    int y = CHIP8_extractY(op);
+
+    // if Vx == Vy, skip next instruction
+    if (reg[x] == reg[y])
+        IP += 4;
+    else
+        IP += 2;
+
     return CORRECT_EXIT;
 }
+
 ReturnCode CHIP8_decode0x6Subset(WORD) {
     return CORRECT_EXIT;
 }
