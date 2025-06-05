@@ -5,7 +5,7 @@
 
 #define RENDER_DELAY 500
 
-#define PIXEL_SiZE 10
+#define PIXEL_SiZE 20
 // these will define SDL_Window dimensions
 #define WINDOW_HEIGHT (CHIP8_SCREEN_HEIGHT * PIXEL_SiZE)
 #define WINDOW_WIDTH  (CHIP8_SCREEN_WIDTH  * PIXEL_SiZE)

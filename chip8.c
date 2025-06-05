@@ -9,7 +9,7 @@
 #include <string.h>
 
 // start address of the code segment (CS)
-#define CS 0x201
+#define CS 0x200
 // overall memory of CHIP8
 #define MEM_SIZE 0xFFF
 
@@ -42,7 +42,7 @@ BYTE mem[MEM_SIZE];
 
 /// Initializes the fonts used by the emulator
 /// by loading them into the memory
-/// @return EXIT_SUCCESS
+/// @return CORRECT_EXIT
 ReturnCode CHIP8_init()
 {
     // storing fonts as binary
@@ -146,7 +146,7 @@ ReturnCode CHIP8_init()
 
     // we will store the fonts in the memory, starting at 0x0
     memcpy(mem, fonts, sizeof(fonts));
-    return EXIT_SUCCESS;
+    return CORRECT_EXIT;
 }
 
 /// The function returns the most significant 4 bits (MSB) of the opcode
@@ -179,7 +179,7 @@ int CHIP8_extractKK(WORD op) {
 /// The function loads ROM at the given path into the memory (mem)
 /// @param path path to the ROM
 /// @return FAILED_TO_LOAD_ROM if anything gone wrong
-///         EXIT_SUCCESS if ROM was loaded
+///         CORRECT_EXIT if ROM was loaded
 ReturnCode CHIP8_loadROM(const char* path) {
     FILE* fp = fopen(path, "rb");
 
@@ -193,7 +193,7 @@ ReturnCode CHIP8_loadROM(const char* path) {
 
     fclose(fp);
 
-    return EXIT_SUCCESS;
+    return CORRECT_EXIT;
 }
 
 ReturnCode CHIP8_decodeOp() {
@@ -202,7 +202,18 @@ ReturnCode CHIP8_decodeOp() {
     }
 
     // fetch current op
-    WORD op = mem[IP];
+    WORD op = 0;
+
+    // copy opcode from mem
+    // since mem is of type BYTE, and WORD is double the space
+    // use memcpy
+    memcpy(&op, mem + IP, sizeof(WORD));
+
+    // since x86 and ARM architectures typically use little-endian systems
+    // we have to adjust the copied memory by swaping MSB and LSB
+    // otherwise little endian puts the opcode as (LSB MSB)
+    // for example, CLS opcode from 00E0 would become 0E00 without adjusting
+    op = ((op & 0x00FF) << 8) | ((op & 0xFF00) >> 8);
 
     ReturnCode rc = CORRECT_EXIT;
 
@@ -259,8 +270,6 @@ ReturnCode CHIP8_decodeOp() {
             break;
     }
 
-    IP++;
-
     return rc;
 }
 
@@ -268,13 +277,12 @@ ReturnCode CHIP8_decodeOp() {
 /// @param data data to be stored onto the stack
 /// @return STACK_OVERFLOW if SP > 0xF (stack size), else CORRECT_EXIT
 ReturnCode CHIP8_push(WORD data) {
-    SP++;
-
     if (SP > 0xF) {
         return STACK_OVERFLOW;
     }
 
     stack[SP] = data;
+    SP++;
 
     return CORRECT_EXIT;
 }
@@ -302,6 +310,9 @@ ReturnCode CHIP8_pop(WORD* data) {
 ReturnCode CHIP8_decode0x0Subset(WORD op) {
     int i = 0, j = 0;
     BYTE opType = 0;
+
+    IP += 2;
+
     // since 0NNN opcode is obsolete, skipping it
     if (CHIP8_extractX(op) != 0) {
         return CORRECT_EXIT;
@@ -340,7 +351,7 @@ ReturnCode CHIP8_decode0x0Subset(WORD op) {
 /// Sets IP to NNN of the opcode
 /// @param op Opcode
 /// @return EXIT_FAILURE if tried to jump to an illegal address |
-///         EXIT_SUCCESS if succeed
+///         CORRECT_EXIT if succeed
 ReturnCode CHIP8_decode0x1Subset(WORD op) {
     WORD addr = CHIP8_extractNNN(op);
 
@@ -356,8 +367,26 @@ ReturnCode CHIP8_decode0x1Subset(WORD op) {
     return CORRECT_EXIT;
 }
 
-ReturnCode CHIP8_decode0x2Subset(WORD) {
-    return CORRECT_EXIT;
+/// Decodes CALL opcode
+/// @param op Opcode
+/// @return EXIT_FAILURE if tried to jump to an illegal address |
+///         STACK_OVERFLOW if push failed |
+///         CORRECT_EXIT if succeed
+ReturnCode CHIP8_decode0x2Subset(WORD op) {
+    int addr = CHIP8_extractNNN(op);
+    ReturnCode rc = CORRECT_EXIT;
+    
+    if (addr < CS || addr >= MEM_SIZE)
+    {
+        return EXIT_FAILURE;
+    }
+
+    // if push fails, rc will be set to STACK_OVERFLOW
+    rc = CHIP8_push(IP);
+    
+    IP = addr;
+
+    return rc;
 }
 ReturnCode CHIP8_decode0x3Subset(WORD) {
     return CORRECT_EXIT;

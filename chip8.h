@@ -16,6 +16,7 @@ typedef unsigned short WORD;
 
 typedef enum returnCode {
     CORRECT_EXIT,
+    FAILED,
     UNRECOGNIZED_OPCODE,
     STACK_OVERFLOW,
     STACK_UNDERFLOW,
