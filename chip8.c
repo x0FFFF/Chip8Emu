@@ -8,6 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+// start address of the code segment (CS)
+#define CS 0x201
+// overall memory of CHIP8
+#define MEM_SIZE 0xFFF
+
 // user space registers declarations
 BYTE reg[0xF];
 
@@ -22,7 +27,7 @@ BYTE soundTimer;
 // super space registers declarations
 
 // instructions start at 0x200
-WORD IP = 0x200;
+WORD IP = CS;
 WORD stack[0xF];
 BYTE SP;
 
@@ -33,7 +38,7 @@ BYTE SP;
 BYTE vmem[CHIP8_SCREEN_HEIGHT][CHIP8_SCREEN_WIDTH];
 
 // memory for our ROMs and sprites
-BYTE mem[0xFFF];
+BYTE mem[MEM_SIZE];
 
 /// Initializes the fonts used by the emulator
 /// by loading them into the memory
@@ -41,7 +46,7 @@ BYTE mem[0xFFF];
 ReturnCode CHIP8_init()
 {
     // storing fonts as binary
-    char fonts[] = {
+    const char fonts[] = {
         0b11110000, // 0
         0b10010000,
         0b10010000,
@@ -184,7 +189,7 @@ ReturnCode CHIP8_loadROM(const char* path) {
     }
 
     // read 3584 bytes from the ROM onto the CS (starting at 0x200)
-    fread(mem + 0x200, sizeof(WORD), 0xDFF, fp);
+    fread(mem + CS, sizeof(WORD), 0xDFF, fp);
 
     fclose(fp);
 
@@ -289,6 +294,11 @@ ReturnCode CHIP8_pop(WORD* data) {
     return CORRECT_EXIT;
 }
 
+/// Decodes CLS and RET opcodes
+/// @param op Opcode
+/// @return UNRECOGNIZED_OPCODE if the opcode is not CLS or RET |
+///         STACK_UNDERFLOW if RET instruction fails |
+///         CORRECT_EXIT if succeed
 ReturnCode CHIP8_decode0x0Subset(WORD op) {
     int i = 0, j = 0;
     BYTE opType = 0;
@@ -318,16 +328,34 @@ ReturnCode CHIP8_decode0x0Subset(WORD op) {
 
     // 00EE - RET (return from subroutine)
     if (opType == 0xE) {
-        // pop will return STACK_UNDERFLOW if an error occured
+        // pop will return STACK_UNDERFLOW if an error occurred
         // else CORRECT_EXIT
         return CHIP8_pop(&IP);
     }
 
     return UNRECOGNIZED_OPCODE;
 }
-ReturnCode CHIP8_decode0x1Subset(WORD) {
+
+/// Decodes JP opcode.
+/// Sets IP to NNN of the opcode
+/// @param op Opcode
+/// @return EXIT_FAILURE if tried to jump to an illegal address |
+///         EXIT_SUCCESS if succeed
+ReturnCode CHIP8_decode0x1Subset(WORD op) {
+    WORD addr = CHIP8_extractNNN(op);
+
+    // check if the address is inside the code segment
+    // and didn't jump to and illegal space at mem
+    if (addr < CS || addr >= MEM_SIZE)
+    {
+        return EXIT_FAILURE;
+    }
+
+    IP = addr;
+
     return CORRECT_EXIT;
 }
+
 ReturnCode CHIP8_decode0x2Subset(WORD) {
     return CORRECT_EXIT;
 }
