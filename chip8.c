@@ -470,9 +470,59 @@ ReturnCode CHIP8_decode0x7Subset(WORD op) {
 ReturnCode CHIP8_decode0x8Subset(WORD op) {
     const int x = CHIP8_extractX(op);
     const int y = CHIP8_extractY(op);
+    const int type = CHIP8_extractN(op);
+    BYTE tmp = 0;
 
     IP += 2;
-    reg[x] = reg[y];
+
+    switch (type) {
+        // SET (Vx, Vy)
+        case 0x0:
+            reg[x] = reg[y];
+            break;
+        // OR (Vx, Vy)
+        case 0x1:
+            reg[x] |= reg[y];
+            break;
+        // OR (Vx, Vy)
+        case 0x2:
+            reg[x] &= reg[y];
+            break;
+        // XOR (Vx, Vy)
+        case 0x3:
+            reg[x] ^= reg[y];
+            break;
+        // ADD (Vx, Vy), VF - carry
+        case 0x4:
+            tmp = reg[x];
+            reg[x] += reg[y];
+            // set the carry to 1 if carry occured
+            VF = tmp > reg[x] || reg[y] > reg[x];
+            break;
+        // SUB (Vx, Vy), VF - borrow
+        case 0x5:
+            VF = reg[x] > reg[y];
+            reg[x] -= reg[y];
+            break;
+        // SHR (Vx) {, Vy}
+        case 0x6:
+            // if LSB of reg[x] is 1, set VF to 1, otherwise VF = 0
+            VF = reg[x] % 2;
+            reg[x] >>= 1;
+            break;
+
+        // SUBN (Vx, Vy)
+        case 0x7:
+            VF = reg[y] > reg[x];
+            reg[y] -= reg[x];
+            break;
+        // SHR (Vx) {, Vy}
+        case 0xE:
+            // if MSB of reg[x] is 1, VF = 1, else VF = 0
+            VF = (reg[x] & 0x80) == 0;
+            reg[x] <<= 1;
+            break;
+    }
 
     return CORRECT_EXIT;
 }
