@@ -353,7 +353,7 @@ ReturnCode CHIP8_decode0x0Subset(WORD op) {
 /// @return EXIT_FAILURE if tried to jump to an illegal address |
 ///         CORRECT_EXIT if succeed
 ReturnCode CHIP8_decode0x1Subset(WORD op) {
-    WORD addr = CHIP8_extractNNN(op);
+    const WORD addr = CHIP8_extractNNN(op);
 
     // check if the address is inside the code segment
     // and didn't jump to and illegal space at mem
@@ -373,7 +373,7 @@ ReturnCode CHIP8_decode0x1Subset(WORD op) {
 ///         STACK_OVERFLOW if push failed |
 ///         CORRECT_EXIT if succeed
 ReturnCode CHIP8_decode0x2Subset(WORD op) {
-    int addr = CHIP8_extractNNN(op);
+    const int addr = CHIP8_extractNNN(op);
     ReturnCode rc = CORRECT_EXIT;
     
     if (addr < CS || addr >= MEM_SIZE)
@@ -393,8 +393,8 @@ ReturnCode CHIP8_decode0x2Subset(WORD op) {
 /// @param op Opcode
 /// @return CORRECT_EXIT
 ReturnCode CHIP8_decode0x3Subset(WORD op) {
-    int val = CHIP8_extractKK(op);
-    int x = CHIP8_extractX(op);
+    const int val = CHIP8_extractKK(op);
+    const int x = CHIP8_extractX(op);
 
     // if Vx == val, skip next instruction
     if (reg[x] == val)
@@ -409,8 +409,8 @@ ReturnCode CHIP8_decode0x3Subset(WORD op) {
 /// @param op Opcode
 /// @return CORRECT_EXIT
 ReturnCode CHIP8_decode0x4Subset(WORD op) {
-    int val = CHIP8_extractKK(op);
-    int x = CHIP8_extractX(op);
+    const int val = CHIP8_extractKK(op);
+    const int x = CHIP8_extractX(op);
 
     // if Vx != val, skip next instruction
     if (reg[x] != val)
@@ -425,8 +425,8 @@ ReturnCode CHIP8_decode0x4Subset(WORD op) {
 /// @param op Opcode
 /// @return CORRECT_EXIT
 ReturnCode CHIP8_decode0x5Subset(WORD op) {
-    int x = CHIP8_extractX(op);
-    int y = CHIP8_extractY(op);
+    const int x = CHIP8_extractX(op);
+    const int y = CHIP8_extractY(op);
 
     // if Vx == Vy, skip next instruction
     if (reg[x] == reg[y])
@@ -437,13 +437,43 @@ ReturnCode CHIP8_decode0x5Subset(WORD op) {
     return CORRECT_EXIT;
 }
 
-ReturnCode CHIP8_decode0x6Subset(WORD) {
+/// Decodes LD (Vx, KK) opcode
+/// @param op Opcode
+/// @return CORRECT_EXIT
+ReturnCode CHIP8_decode0x6Subset(WORD op) {
+    const int x = CHIP8_extractX(op);
+    const int val = CHIP8_extractKK(op);
+
+    IP += 2;
+
+    reg[x] = val;
+
     return CORRECT_EXIT;
 }
-ReturnCode CHIP8_decode0x7Subset(WORD) {
+
+/// Decodes ADD (Vx, KK) opcode
+/// @param op Opcode
+/// @return CORRECT_EXIT
+ReturnCode CHIP8_decode0x7Subset(WORD op) {
+    const int x = CHIP8_extractX(op);
+    const int val = CHIP8_extractKK(op);
+
+    IP += 2;
+    reg[x] += val;
+
     return CORRECT_EXIT;
 }
-ReturnCode CHIP8_decode0x8Subset(WORD) {
+
+/// Decodes LD (Vx, Vy) opcode
+/// @param op Opcode
+/// @return CORRECT_EXIT
+ReturnCode CHIP8_decode0x8Subset(WORD op) {
+    const int x = CHIP8_extractX(op);
+    const int y = CHIP8_extractY(op);
+
+    IP += 2;
+    reg[x] = reg[y];
+
     return CORRECT_EXIT;
 }
 ReturnCode CHIP8_decode0x9Subset(WORD) {
