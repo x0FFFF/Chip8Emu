@@ -31,6 +31,8 @@ int CHIP8_extractX(WORD);
 int CHIP8_extractY(WORD);
 int CHIP8_extractKK(WORD);
 
+ReturnCode CHIP8_init();
+
 ReturnCode CHIP8_push(WORD);
 ReturnCode CHIP8_pop(WORD*);
 

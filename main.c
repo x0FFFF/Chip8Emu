@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <SDL.h>
 #include "chip8.h"
+#define DEBUG
+
+#define RENDER_DELAY 500
 
 #define PIXEL_SiZE 10
 // these will define SDL_Window dimensions
@@ -17,6 +20,17 @@ int main(void)
     SDL_Event event;
 
     SDL_Rect pixels[CHIP8_SCREEN_HEIGHT][CHIP8_SCREEN_WIDTH];
+
+    // debug only
+#ifdef DEBUG
+    char ROM_path[] = "../ROMs/MyROM";
+
+    if (CHIP8_loadROM(ROM_path) != CORRECT_EXIT)
+    {
+        printf("Failed to load ROM at %s\n", ROM_path);
+        exit(-1);
+    }
+#endif
 
     // is used for the main loop
     int is_running = 1;
@@ -44,6 +58,7 @@ int main(void)
         exit(-1);
     }
 
+    CHIP8_init();
     initPixels(pixels, PIXEL_SiZE, CHIP8_SCREEN_HEIGHT, CHIP8_SCREEN_WIDTH);
 
     // now let's set up the renderer
@@ -58,23 +73,13 @@ int main(void)
         exit(-1);
     }
 
-    // only for debug
-    SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
-
+    // test
     vmem[0][0] = 1;
-    vmem[1][1] = 1;
-    vmem[2][2] = 1;
-    vmem[3][3] = 1;
-
-    renderScreen(renderer, pixels, vmem);
-
-    SDL_RenderPresent(renderer);
-    ////////////////// end of "for debug" area
 
     // main game loop
     while (is_running)
     {
-        if (SDL_PollEvent(&event) > 0)
+        while (SDL_PollEvent(&event) != 0)
         {
             switch (event.type)
             {
@@ -85,12 +90,20 @@ int main(void)
             }
         }
 
-        SDL_UpdateWindowSurface(window);
+        CHIP8_decodeOp();
+
+        // render current vmem state
+        renderScreen(renderer, pixels, vmem);
+
+        // wait before drawing the next frame
+        SDL_Delay(RENDER_DELAY);
+        // display current renderer to the screen
+        SDL_RenderPresent(renderer);
     }
+
 
     // release the renderer
     SDL_DestroyRenderer(renderer);
-
     return 0;
 }
 

@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // user space registers declarations
 BYTE reg[0xF];
@@ -34,6 +35,114 @@ BYTE vmem[CHIP8_SCREEN_HEIGHT][CHIP8_SCREEN_WIDTH];
 // memory for our ROMs and sprites
 BYTE mem[0xFFF];
 
+/// Initializes the fonts used by the emulator
+/// by loading them into the memory
+/// @return EXIT_SUCCESS
+ReturnCode CHIP8_init()
+{
+    // storing fonts as binary
+    char fonts[] = {
+        0b11110000, // 0
+        0b10010000,
+        0b10010000,
+        0b10010000,
+        0b11110000,
+
+        0b00100000, // 1
+        0b01100000,
+        0b00100000,
+        0b00100000,
+        0b01110000,
+
+        0b11110000, // 2
+        0b00010000,
+        0b11110000,
+        0b10000000,
+        0b11110000,
+
+        0b11110000, // 3
+        0b00010000,
+        0b11110000,
+        0b00010000,
+        0b11110000,
+
+        0b10010000, // 4
+        0b10010000,
+        0b11110000,
+        0b00010000,
+        0b00010000,
+
+        0b11110000, // 5
+        0b10000000,
+        0b11110000,
+        0b00010000,
+        0b11110000,
+
+        0b11110000, // 6
+        0b10000000,
+        0b11110000,
+        0b10010000,
+        0b11110000,
+
+        0b11110000, // 7
+        0b00010000,
+        0b00100000,
+        0b01000000,
+        0b01000000,
+
+        0b11110000, // 8
+        0b10010000,
+        0b11110000,
+        0b10010000,
+        0b11110000,
+
+        0b11110000, // 9
+        0b10010000,
+        0b11110000,
+        0b00010000,
+        0b11110000,
+
+        0b11110000, // A
+        0b10010000,
+        0b11110000,
+        0b10010000,
+        0b10010000,
+
+        0b11100000, // B
+        0b10010000,
+        0b11100000,
+        0b10010000,
+        0b11100000,
+
+        0b11110000, // C
+        0b10000000,
+        0b10000000,
+        0b10000000,
+        0b11110000,
+
+        0b11100000, // D
+        0b10010000,
+        0b10010000,
+        0b10010000,
+        0b11100000,
+
+        0b11110000, // E
+        0b10000000,
+        0b11110000,
+        0b10000000,
+        0b11110000,
+
+        0b11110000, // F
+        0b10000000,
+        0b11110000,
+        0b10000000,
+        0b10000000
+    };
+
+    // we will store the fonts in the memory, starting at 0x0
+    memcpy(mem, fonts, sizeof(fonts));
+    return EXIT_SUCCESS;
+}
 
 /// The function returns the most significant 4 bits (MSB) of the opcode
 /// @param op opcode
@@ -83,6 +192,10 @@ ReturnCode CHIP8_loadROM(const char* path) {
 }
 
 ReturnCode CHIP8_decodeOp() {
+    if (IP > sizeof(mem)) {
+        return UNRECOGNIZED_OPCODE;
+    }
+
     // fetch current op
     WORD op = mem[IP];
 
@@ -141,6 +254,8 @@ ReturnCode CHIP8_decodeOp() {
             break;
     }
 
+    IP++;
+
     return rc;
 }
 
@@ -187,12 +302,12 @@ ReturnCode CHIP8_decode0x0Subset(WORD op) {
         return UNRECOGNIZED_OPCODE;
     }
 
-    opType = CHIP8_extractY(op);
+    opType = CHIP8_extractN(op);
 
     // 00E0 - CLS (clear screen)
     if (opType == 0x0) {
         for (i = 0; i < CHIP8_SCREEN_HEIGHT; i++) {
-            for (j = 0; j < CHIP8_SCREEN_HEIGHT; j++) {
+            for (j = 0; j < CHIP8_SCREEN_WIDTH; j++) {
                 // set every pixel off
                 vmem[i][j] = 0x0;
             }
