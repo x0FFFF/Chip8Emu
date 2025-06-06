@@ -464,7 +464,8 @@ ReturnCode CHIP8_decode0x7Subset(WORD op) {
     return CORRECT_EXIT;
 }
 
-/// Decodes LD (Vx, Vy) opcode
+/// Decodes: LD (Vx, Vy)
+/// OR, AND, XOR, ADD, SUB, SHR, SHL and SUBN opcodes
 /// @param op Opcode
 /// @return CORRECT_EXIT
 ReturnCode CHIP8_decode0x8Subset(WORD op) {
@@ -522,17 +523,51 @@ ReturnCode CHIP8_decode0x8Subset(WORD op) {
             VF = (reg[x] & 0x80) == 0;
             reg[x] <<= 1;
             break;
+        default:
+            return UNRECOGNIZED_OPCODE;
     }
 
     return CORRECT_EXIT;
 }
-ReturnCode CHIP8_decode0x9Subset(WORD) {
+
+/// Decodes SNE (Vx, Vy)
+/// @param op Opcode
+/// @return CORRECT_EXIT
+ReturnCode CHIP8_decode0x9Subset(WORD op) {
+    const int x = CHIP8_extractX(op);
+    const int y = CHIP8_extractY(op);
+
+    if (reg[x] != reg[y])
+        IP += 4;
+    else
+        IP += 2;
+
     return CORRECT_EXIT;
 }
-ReturnCode CHIP8_decode0xASubset(WORD) {
+
+/// Decodes LD (I, NNN) opcode
+/// @param op
+/// @return CORRECT_EXIT
+ReturnCode CHIP8_decode0xASubset(WORD op) {
+    const int addr = CHIP8_extractNNN(op);
+
+    IP += 2;
+    I = addr;
+
     return CORRECT_EXIT;
 }
-ReturnCode CHIP8_decode0xBSubset(WORD) {
+
+/// Decodes JP (V0, NNN) opcode
+/// @param op Opcode
+/// @return FAILED if IP is set to illegal address outside the CS (code segment) |
+///         CORRECT_EXIT if succeed
+ReturnCode CHIP8_decode0xBSubset(WORD op) {
+    const int addr = CHIP8_extractNNN(op);
+
+    IP = reg[0] + addr;
+
+    if (IP > MEM_SIZE || IP < CS) return FAILED;
+
     return CORRECT_EXIT;
 }
 ReturnCode CHIP8_decode0xCSubset(WORD) {
