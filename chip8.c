@@ -570,9 +570,21 @@ ReturnCode CHIP8_decode0xBSubset(WORD op) {
 
     return CORRECT_EXIT;
 }
-ReturnCode CHIP8_decode0xCSubset(WORD) {
+
+/// Decodes RND opcode
+/// @param op Opcode
+/// @return CORRECT_EXIT
+ReturnCode CHIP8_decode0xCSubset(WORD op) {
+    const int kk = CHIP8_extractKK(op);
+    const int x = CHIP8_extractX(op);
+    // generate a random byte
+    const int random = rand() % 256;
+
+    reg[x] = (BYTE)(random & kk);
+
     return CORRECT_EXIT;
 }
+
 ReturnCode CHIP8_decode0xDSubset(WORD) {
     return CORRECT_EXIT;
 }
