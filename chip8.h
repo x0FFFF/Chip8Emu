@@ -23,7 +23,7 @@ typedef enum returnCode {
     FAILED_TO_LOAD_ROM,
 } ReturnCode;
 
-extern BYTE vmem[CHIP8_SCREEN_HEIGHT][CHIP8_SCREEN_WIDTH];
+extern BYTE vmem[CHIP8_SCREEN_WIDTH * CHIP8_SCREEN_HEIGHT];
 
 int CHIP8_extractMSB(WORD);
 int CHIP8_extractNNN(WORD);

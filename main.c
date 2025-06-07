@@ -11,7 +11,8 @@
 #define WINDOW_WIDTH  (CHIP8_SCREEN_WIDTH  * PIXEL_SiZE)
 
 static void initPixels(SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], int pixel_size, int rows, int cols);
-static void renderScreen(SDL_Renderer* renderer, SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], BYTE vmem[][CHIP8_SCREEN_WIDTH]);
+static void renderScreen(SDL_Renderer* renderer, SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], BYTE vmem[CHIP8_SCREEN_WIDTH * CHIP8_SCREEN_HEIGHT]);
+static int isOn(BYTE byte, int index);
 
 int main(void)
 {
@@ -74,7 +75,11 @@ int main(void)
     }
 
     // test
-    vmem[0][0] = 1;
+    vmem[0]   ^= 0b11100000;
+    vmem[64]  ^= 0b10010000;
+    vmem[128] ^= 0b10010000;
+    vmem[192] ^= 0b10010000;
+    vmem[256] ^= 0b11100000;
 
     // main game loop
     while (is_running)
@@ -145,24 +150,38 @@ void initPixels(SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], int pixel_size, int rows,
 /// @param renderer Renderer
 /// @param pixels Array of SDL_rect, represents the pixels on the screen
 /// @param vmem video memory of CHIP8
-void renderScreen(SDL_Renderer* renderer, SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], BYTE vmem[][CHIP8_SCREEN_WIDTH])
-{
-    int i = 0;
-    int j = 0;
+void renderScreen(SDL_Renderer* renderer, SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], BYTE vmem[CHIP8_SCREEN_WIDTH * CHIP8_SCREEN_HEIGHT]) {
+    int row = 0, col = 0;
+    BYTE tmp = 0;
 
-    for (i = 0; i < CHIP8_SCREEN_HEIGHT; i++)
+    for (row = 0; row < CHIP8_SCREEN_HEIGHT; row++)
     {
-        for (j = 0; j < CHIP8_SCREEN_WIDTH; j++)
+        for (col = 0; col < CHIP8_SCREEN_WIDTH; col++)
         {
-            // if pixel at i, j is on, the draw it with white color
-            if (vmem[i][j])
+            tmp = vmem[row * CHIP8_SCREEN_WIDTH + col / 8];
+
+            if (!tmp) continue;
+
+            // if pixel at row and col is on, the draw it with white color
+            if (isOn(tmp, col % 8))
                 SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
             // else draw it with black
             else
                 SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0x0, SDL_ALPHA_OPAQUE);
 
             // now render the pixel on the renderer with correct color we set above
-            SDL_RenderFillRect(renderer, &pixels[i][j]);
+            SDL_RenderFillRect(renderer, &pixels[row][col]);
         }
     }
+}
+
+static int isOn(BYTE byte, int index)
+{
+    unsigned char mask = 0b1 << (8 - index - 1);
+
+    byte &= mask;
+
+    byte >>= 8 - index - 1;
+
+    return byte;
 }

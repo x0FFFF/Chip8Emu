@@ -35,7 +35,7 @@ BYTE SP;
 // this implementation uses a 64x32 screen
 // the screen supporting black and white, so each
 // pixel will have 2 states: 1 - on, 0 - off
-BYTE vmem[CHIP8_SCREEN_HEIGHT][CHIP8_SCREEN_WIDTH];
+BYTE vmem[CHIP8_SCREEN_WIDTH * CHIP8_SCREEN_HEIGHT];
 
 // memory for our ROMs and sprites
 BYTE mem[MEM_SIZE];
@@ -327,11 +327,9 @@ ReturnCode CHIP8_decode0x0Subset(WORD op) {
 
     // 00E0 - CLS (clear screen)
     if (opType == 0x0) {
-        for (i = 0; i < CHIP8_SCREEN_HEIGHT; i++) {
-            for (j = 0; j < CHIP8_SCREEN_WIDTH; j++) {
-                // set every pixel off
-                vmem[i][j] = 0x0;
-            }
+        for (i = 0; i < sizeof(vmem); i++) {
+            // set every pixel to 0
+            vmem[i] = 0x0;
         }
 
         return CORRECT_EXIT;
