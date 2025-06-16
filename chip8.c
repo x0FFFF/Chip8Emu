@@ -40,6 +40,9 @@ BYTE vmem[CHIP8_SCREEN_HEIGHT][CHIP8_SCREEN_WIDTH];
 // memory for our ROMs and sprites
 BYTE mem[MEM_SIZE];
 
+// will store boolean value for each key to indicate whether the key is pressed or not
+BYTE keys[0x10];
+
 /// Initializes the fonts used by the emulator
 /// by loading them into the memory
 /// @return CORRECT_EXIT
@@ -588,7 +591,30 @@ ReturnCode CHIP8_decode0xCSubset(WORD op) {
 ReturnCode CHIP8_decode0xDSubset(WORD) {
     return CORRECT_EXIT;
 }
-ReturnCode CHIP8_decode0xESubset(WORD) {
+ReturnCode CHIP8_decode0xESubset(WORD op) {
+    const int x = CHIP8_extractX(op);
+    const int KK = CHIP8_extractKK(op);
+
+    // if the last 8 bits don't fit any of 2 opcodes for space, return an ERROR
+    if (KK != 0x9E && KK != 0xA1) {
+        return UNRECOGNIZED_OPCODE;
+    }
+
+    if (reg[x] > 0xF) return FAILED;
+
+    switch (KK) {
+        case 0x9E:
+            if (keys[reg[x]]) IP += 4;
+            else IP += 2;
+            break;
+        case 0xA1:
+            if (!keys[reg[x]]) IP += 4;
+            else IP += 2;
+            break;
+        default:
+            break;
+    }
+
     return CORRECT_EXIT;
 }
 ReturnCode CHIP8_decode0xFSubset(WORD) {

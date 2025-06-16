@@ -12,6 +12,7 @@
 
 static void initPixels(SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], int pixel_size, int rows, int cols);
 static void renderScreen(SDL_Renderer* renderer, SDL_Rect pixels[][CHIP8_SCREEN_WIDTH], BYTE vmem[][CHIP8_SCREEN_WIDTH]);
+static void updateKeyState(SDL_KeyCode key, BYTE state);
 
 int main(void)
 {
@@ -73,9 +74,6 @@ int main(void)
         exit(-1);
     }
 
-    // test
-    vmem[0][0] = 1;
-
     // main game loop
     while (is_running)
     {
@@ -85,6 +83,12 @@ int main(void)
             {
                 case SDL_QUIT:
                     is_running = 0;
+                    break;
+                case SDL_KEYDOWN:
+                    updateKeyState(event.key.keysym.sym, 1);
+                    break;
+                case SDL_KEYUP:
+                    updateKeyState(event.key.keysym.sym, 0);
                     break;
                 default: break;
             }
@@ -164,5 +168,63 @@ void renderScreen(SDL_Renderer* renderer, SDL_Rect pixels[][CHIP8_SCREEN_WIDTH],
             // now render the pixel on the renderer with correct color we set above
             SDL_RenderFillRect(renderer, &pixels[i][j]);
         }
+    }
+}
+
+/// Updates the state of the key in keys array to the given state (Pressed - 1, Unpressed - 0)
+/// @param key SDL_KeyCode type
+/// @param state The state to set the key to in keys array
+static void updateKeyState(SDL_KeyCode key, BYTE state) {
+    switch (key) {
+        case SDLK_0:
+            keys[0] = state;
+            break;
+        case SDLK_1:
+            keys[0x1] = state;
+            break;
+        case SDLK_2:
+            keys[0x2] = state;
+            break;
+        case SDLK_3:
+            keys[0x3] = state;
+            break;
+        case SDLK_4:
+            keys[0x4] = state;
+            break;
+        case SDLK_5:
+            keys[0x5] = state;
+            break;
+        case SDLK_6:
+            keys[0x6] = state;
+            break;
+        case SDLK_7:
+            keys[0x7] = state;
+            break;
+        case SDLK_8:
+            keys[0x8] = state;
+            break;
+        case SDLK_9:
+            keys[0x9] = state;
+            break;
+        case SDLK_a:
+            keys[0xA] = state;
+            break;
+        case SDLK_b:
+            keys[0xB] = state;
+            break;
+        case SDLK_c:
+            keys[0xC] = state;
+            break;
+        case SDLK_d:
+            keys[0xD] = state;
+            break;
+        case SDLK_e:
+            keys[0xE] = state;
+            break;
+        case SDLK_f:
+            keys[0xF] = state;
+            break;
+        default:
+            break;
     }
 }

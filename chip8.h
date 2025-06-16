@@ -24,6 +24,7 @@ typedef enum returnCode {
 } ReturnCode;
 
 extern BYTE vmem[CHIP8_SCREEN_HEIGHT][CHIP8_SCREEN_WIDTH];
+extern BYTE keys[0x10];
 
 int CHIP8_extractMSB(WORD);
 int CHIP8_extractNNN(WORD);
